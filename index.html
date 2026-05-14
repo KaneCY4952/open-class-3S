@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3S技术巅峰对决 | 珠峰挑战赛 · 双人竞速</title>
+    <title>3S技术巅峰对决 | 珠峰挑战赛 · 竞速版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -251,7 +251,7 @@
                 <button class="tech-opt gnss" data-tech="GNSS" data-side="left">📍 GNSS</button>
                 <button class="tech-opt gis" data-tech="GIS" data-side="left">🗺️ GIS</button>
             </div>
-            <div class="feedback" id="leftFeedback">⚡ 点击选项，正确自动下一题！</div>
+            <div class="feedback" id="leftFeedback">⚡ 点击选项，正确自动下一题！<br>⚠️ 每道题最多错2次，第3次强制跳过并+5秒惩罚</div>
             <div id="leftVictoryMsg" class="victory-stamp">🏆 已完成所有题目！🏆</div>
         </div>
         <div class="reset-area">
@@ -276,7 +276,7 @@
                 <button class="tech-opt gnss" data-tech="GNSS" data-side="right">📍 GNSS</button>
                 <button class="tech-opt gis" data-tech="GIS" data-side="right">🗺️ GIS</button>
             </div>
-            <div class="feedback" id="rightFeedback">⚡ 点击选项，正确自动下一题！</div>
+            <div class="feedback" id="rightFeedback">⚡ 点击选项，正确自动下一题！<br>⚠️ 每道题最多错2次，第3次强制跳过并+5秒惩罚</div>
             <div id="rightVictoryMsg" class="victory-stamp">🏆 已完成所有题目！🏆</div>
         </div>
         <div class="reset-area">
@@ -285,18 +285,18 @@
     </div>
 </div>
 <footer>
-    🧭 3S技术 · 极限竞速 | 20题(含珠峰+精准农业) | 双方全部完成后弹窗宣布获胜者 | 答错可重选
+    🧭 3S技术 · 极限竞速 | 每道题最多错2次，第3次强制跳过+5秒罚时 | 答错后无停顿，可立即重试 | 双方完成后弹窗宣布获胜者
 </footer>
 
 <script>
-    // 题库20道
+    // 题库20道 (修正部分题目逻辑，确保答案合理)
     const QUESTIONS = [
         { text: "【珠峰测高】使用卫星照片找出东绒布冰川表面的冰裂缝，应该用哪种技术？", correct: "RS" },
         { text: "【精准农业】用无人机拍摄麦田照片，看出哪块地的小麦长得不好，需要多施肥。这是哪种技术的应用？", correct: "RS" },
         { text: "【城市内涝】暴雨后，通过卫星照片快速找出哪些路段有积水。这属于哪种技术？", correct: "RS" },
         { text: "【野生动物保护】给藏羚羊戴上GPS项圈，随时知道它们走到哪里。这是哪种技术？", correct: "GNSS" },
         { text: "【地震应急】通过对比地震前后的卫星照片，判断哪些房屋倒塌了。用哪种技术？", correct: "RS" },
-        { text: "【智慧物流】快递员用手机定位找到自己当前位置，然后规划送货路线。这用了哪种技术？", correct: "GIS" },
+        { text: "【智慧物流】快递员用手机定位找到自己当前位置，然后规划送货路线。规划路线用了哪种技术？", correct: "GIS" },
         { text: "【林业防火】把森林地图、天气数据和火点位置叠加在一起，预测火会往哪烧。这是哪种技术？", correct: "GIS" },
         { text: "【珠峰测高】登顶队员打开接收机，连续40分钟接收北斗卫星信号，算出海拔高度。用哪种技术？", correct: "GNSS" },
         { text: "【精准农业】收割机上装了GPS，边收割边记录不同位置的小麦产量，最后生成一张产量地图。记录位置主要靠哪种技术？", correct: "GNSS" },
@@ -384,6 +384,10 @@
             this.timerInterval = null;
             this.timerRunning = false;
             this.finishSeconds = null;
+            // 当前题错误次数（针对当前题目）
+            this.currentQuestionAttempts = 0;
+            // 总惩罚秒数
+            this.penaltySeconds = 0;
             
             this.timerSpan = document.getElementById(timerId);
             this.progressSpan = document.getElementById(progressId);
@@ -398,6 +402,7 @@
                 this.resetBtn.addEventListener('click', () => this.resetGame());
             }
             
+            // 绑定选项事件：无停顿，可立即重试
             this.optionBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     if (this.completed) {
@@ -414,9 +419,18 @@
             this.updateDisplay();
         }
 
-        setFeedback(msg, bgColor) {
-            this.feedbackDiv.innerHTML = msg;
-            this.feedbackDiv.style.backgroundColor = bgColor;
+        // 获取当前显示时间（实际流逝时间 + 惩罚时间）
+        getCurrentDisplayTime() {
+            if (!this.timerRunning || !this.startTime) return this.penaltySeconds;
+            const elapsed = (Date.now() - this.startTime) / 1000;
+            return elapsed + this.penaltySeconds;
+        }
+
+        updateTimerDisplay() {
+            if (this.timerSpan) {
+                const displayTime = this.getCurrentDisplayTime();
+                this.timerSpan.innerText = displayTime.toFixed(2);
+            }
         }
 
         startTimer() {
@@ -425,8 +439,7 @@
             this.timerRunning = true;
             this.timerInterval = setInterval(() => {
                 if (!this.timerRunning || this.completed) return;
-                const elapsed = (Date.now() - this.startTime) / 1000;
-                this.timerSpan.innerText = elapsed.toFixed(2);
+                this.updateTimerDisplay();
             }, 100);
         }
 
@@ -437,8 +450,25 @@
             }
             this.timerRunning = false;
             if (this.startTime) {
-                this.finishSeconds = (Date.now() - this.startTime) / 1000;
-                this.timerSpan.innerText = this.finishSeconds.toFixed(2);
+                const finalTime = (Date.now() - this.startTime) / 1000 + this.penaltySeconds;
+                this.finishSeconds = finalTime;
+                this.timerSpan.innerText = finalTime.toFixed(2);
+            } else {
+                this.finishSeconds = this.penaltySeconds;
+                this.timerSpan.innerText = this.penaltySeconds.toFixed(2);
+            }
+        }
+
+        // 强制跳过当前题目（因错误次数达上限）
+        forceSkipQuestion() {
+            this.penaltySeconds += 5;
+            this.updateTimerDisplay();
+            this.setFeedback(`⚠️ 本题错误已达3次！强制跳过并 +5 秒惩罚 (总惩罚 +5s)`, "#f5bc70");
+            this.currentQuestionAttempts = 0;
+            this.currentIndex++;
+            this.updateDisplay();
+            if (this.currentIndex === TOTAL_QS) {
+                this.completeGame();
             }
         }
 
@@ -447,7 +477,9 @@
             const currentQ = QUESTIONS[this.currentIndex];
             if (!currentQ) return;
             const isCorrect = (selected === currentQ.correct);
+            
             if (isCorrect) {
+                this.currentQuestionAttempts = 0;
                 this.setFeedback(`✅ 正确！ 进入下一题`, "#cfe9cd");
                 this.currentIndex++;
                 this.updateDisplay();
@@ -455,7 +487,15 @@
                     this.completeGame();
                 }
             } else {
-                this.setFeedback(`❌ 回答错误！ 再试试看，仔细分析场景对应技术。`, "#ffe0cc");
+                this.currentQuestionAttempts++;
+                const remainingAttempts = 2 - (this.currentQuestionAttempts - 1);
+                if (this.currentQuestionAttempts >= 3) {
+                    this.forceSkipQuestion();
+                    return;
+                } else {
+                    this.setFeedback(`❌ 回答错误！ 本题还剩 ${remainingAttempts} 次尝试机会，再错将强制跳过并+5秒`, "#ffe0cc");
+                }
+                // 答错后不做停顿，按钮立即可用
                 this.feedbackDiv.style.transform = "scale(0.98)";
                 setTimeout(() => { if(this.feedbackDiv) this.feedbackDiv.style.transform = ""; }, 200);
             }
@@ -480,12 +520,12 @@
 
         completeGame() {
             if (this.completed) return;
-            this.stopAndRecordTime(); // 停止计时并记录最终秒数
+            this.stopAndRecordTime();
             this.completed = true;
             this.victoryMsgDiv.style.display = "block";
             this.progressSpan.innerText = `${TOTAL_QS} / ${TOTAL_QS}`;
             this.qCounterSpan.innerText = `完成！ ${TOTAL_QS}/${TOTAL_QS}`;
-            this.setFeedback(`🎉 已完成全部20题！ 用时 ${this.timerSpan.innerText} 秒，等待对方完成比赛 🎉`, "#ffda9e");
+            this.setFeedback(`🎉 已完成全部20题！ 最终用时 ${this.finishSeconds.toFixed(2)} 秒 (含惩罚) 🎉`, "#ffda9e");
             this.optionBtns.forEach(btn => {
                 btn.disabled = true;
                 btn.classList.add("disabled-btn");
@@ -532,6 +572,8 @@
             this.timerRunning = false;
             this.startTime = null;
             this.finishSeconds = null;
+            this.currentQuestionAttempts = 0;
+            this.penaltySeconds = 0;
             this.timerSpan.innerText = "0.00";
             this.victoryMsgDiv.style.display = "none";
             this.optionBtns.forEach(btn => {
@@ -539,7 +581,12 @@
                 btn.classList.remove("disabled-btn");
             });
             this.updateDisplay();
-            this.setFeedback("🔄 游戏已重置，点击选项开始计时！", "#ebdbc4");
+            this.setFeedback("🔄 游戏已重置，点击选项开始计时！（每题最多错2次，第3次+5秒）", "#ebdbc4");
+        }
+
+        setFeedback(msg, bgColor) {
+            this.feedbackDiv.innerHTML = msg;
+            this.feedbackDiv.style.backgroundColor = bgColor;
         }
     }
 
