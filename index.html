@@ -10,26 +10,35 @@
             user-select: none;
         }
 
+        /* 确保 body 完全居中，使用 flex 实现垂直水平居中 */
         body {
             margin: 0;
+            padding: 20px;
             min-height: 100vh;
             background: linear-gradient(135deg, #0b2f3c 0%, #1c5a7a 100%);
             font-family: 'Segoe UI', 'PingFang SC', 'Roboto', 'Microsoft YaHei', sans-serif;
-            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;      /* 垂直居中 */
+            align-items: center;          /* 水平居中 */
         }
 
+        /* 主容器：整体居中，宽度自适应，最大宽度1600px */
         .arena {
             max-width: 1600px;
+            width: 100%;
             margin: 0 auto;
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
             justify-content: center;
+            align-items: stretch;
         }
 
         .player-zone {
             flex: 1;
             min-width: 380px;
+            max-width: 780px;
             background: rgba(255, 250, 240, 0.95);
             border-radius: 64px;
             box-shadow: 0 25px 40px rgba(0, 0, 0, 0.4);
@@ -184,6 +193,7 @@
             color: #f2e6cf;
             margin-top: 28px;
             font-size: 0.8rem;
+            width: 100%;
         }
         .winner-permanent-flag {
             text-align: center;
@@ -223,12 +233,29 @@
             cursor: pointer;
             font-weight: bold;
         }
+        /* 响应式调整：小屏幕时减少内边距，保持居中 */
         @media (max-width: 880px) {
-            .player-zone { min-width: 320px; }
-            .question-text { font-size: 1.1rem; }
-            .team-name { font-size: 1.4rem; }
-            .tech-opt { font-size: 1rem; }
-            .custom-alert { font-size: 1.2rem; padding: 18px 25px; white-space: normal; width: 80%; }
+            body {
+                padding: 15px;
+            }
+            .player-zone {
+                min-width: 320px;
+            }
+            .question-text {
+                font-size: 1.1rem;
+            }
+            .team-name {
+                font-size: 1.4rem;
+            }
+            .tech-opt {
+                font-size: 1rem;
+            }
+            .custom-alert {
+                font-size: 1.2rem;
+                padding: 18px 25px;
+                white-space: normal;
+                width: 80%;
+            }
         }
     </style>
 </head>
