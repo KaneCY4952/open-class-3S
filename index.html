@@ -10,20 +10,18 @@
             user-select: none;
         }
 
-        /* 确保 body 完全居中，使用 flex 实现垂直水平居中 */
         body {
             margin: 0;
-            padding: 20px;
             min-height: 100vh;
             background: linear-gradient(135deg, #0b2f3c 0%, #1c5a7a 100%);
             font-family: 'Segoe UI', 'PingFang SC', 'Roboto', 'Microsoft YaHei', sans-serif;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;      /* 垂直居中 */
-            align-items: center;          /* 水平居中 */
+            justify-content: center;
+            align-items: center;
         }
 
-        /* 主容器：整体居中，宽度自适应，最大宽度1600px */
         .arena {
             max-width: 1600px;
             width: 100%;
@@ -233,29 +231,13 @@
             cursor: pointer;
             font-weight: bold;
         }
-        /* 响应式调整：小屏幕时减少内边距，保持居中 */
         @media (max-width: 880px) {
-            body {
-                padding: 15px;
-            }
-            .player-zone {
-                min-width: 320px;
-            }
-            .question-text {
-                font-size: 1.1rem;
-            }
-            .team-name {
-                font-size: 1.4rem;
-            }
-            .tech-opt {
-                font-size: 1rem;
-            }
-            .custom-alert {
-                font-size: 1.2rem;
-                padding: 18px 25px;
-                white-space: normal;
-                width: 80%;
-            }
+            body { padding: 15px; }
+            .player-zone { min-width: 320px; }
+            .question-text { font-size: 1.1rem; }
+            .team-name { font-size: 1.4rem; }
+            .tech-opt { font-size: 1rem; }
+            .custom-alert { font-size: 1.2rem; padding: 18px 25px; white-space: normal; width: 80%; }
         }
     </style>
 </head>
@@ -278,7 +260,7 @@
                 <button class="tech-opt gnss" data-tech="GNSS" data-side="left">📍 GNSS</button>
                 <button class="tech-opt gis" data-tech="GIS" data-side="left">🗺️ GIS</button>
             </div>
-            <div class="feedback" id="leftFeedback">⚡ 点击选项，正确自动下一题！<br>⚠️ 每道题最多错2次，第3次强制跳过并+5秒惩罚</div>
+            <div class="feedback" id="leftFeedback">⚡ 点击选项，正确自动下一题！<br>⚠️ 错误惩罚：第1次+2秒，第2次再+3秒，后续每次+2秒</div>
             <div id="leftVictoryMsg" class="victory-stamp">🏆 已完成所有题目！🏆</div>
         </div>
         <div class="reset-area">
@@ -303,7 +285,7 @@
                 <button class="tech-opt gnss" data-tech="GNSS" data-side="right">📍 GNSS</button>
                 <button class="tech-opt gis" data-tech="GIS" data-side="right">🗺️ GIS</button>
             </div>
-            <div class="feedback" id="rightFeedback">⚡ 点击选项，正确自动下一题！<br>⚠️ 每道题最多错2次，第3次强制跳过并+5秒惩罚</div>
+            <div class="feedback" id="rightFeedback">⚡ 点击选项，正确自动下一题！<br>⚠️ 错误惩罚：第1次+2秒，第2次再+3秒，后续每次+2秒</div>
             <div id="rightVictoryMsg" class="victory-stamp">🏆 已完成所有题目！🏆</div>
         </div>
         <div class="reset-area">
@@ -312,11 +294,11 @@
     </div>
 </div>
 <footer>
-    🧭 3S技术 · 极限竞速 | 每道题最多错2次，第3次强制跳过+5秒罚时 | 答错后无停顿，可立即重试 | 双方完成后弹窗宣布获胜者
+    🧭 3S技术 · 极限竞速 | 每道题可无限尝试，但错误会累加时间（第1次+2s，第2次+3s，后续每次+2s）| 双方全部完成后弹窗宣布获胜者
 </footer>
 
 <script>
-    // 题库20道 (修正部分题目逻辑，确保答案合理)
+    // 题库20道 (与之前相同)
     const QUESTIONS = [
         { text: "【珠峰测高】使用卫星照片找出东绒布冰川表面的冰裂缝，应该用哪种技术？", correct: "RS" },
         { text: "【精准农业】用无人机拍摄麦田照片，看出哪块地的小麦长得不好，需要多施肥。这是哪种技术的应用？", correct: "RS" },
@@ -362,9 +344,7 @@
         modal.className = 'custom-alert';
         modal.innerHTML = `<div>${message.replace(/\n/g, '<br>')}</div><button id="closeWinnerAlert">确定</button>`;
         document.body.appendChild(modal);
-        document.getElementById('closeWinnerAlert').onclick = () => {
-            modal.remove();
-        };
+        document.getElementById('closeWinnerAlert').onclick = () => modal.remove();
         const leftZone = document.getElementById('leftZone');
         const rightZone = document.getElementById('rightZone');
         const addFlag = (zone, msg, bg) => {
@@ -392,13 +372,9 @@
     function checkBothComplete() {
         if (gameFinished) return;
         if (leftCompleted && rightCompleted && leftFinishSeconds !== null && rightFinishSeconds !== null) {
-            if (leftFinishSeconds < rightFinishSeconds) {
-                showWinnerPopup("珠峰南坡队", leftFinishSeconds, rightFinishSeconds);
-            } else if (rightFinishSeconds < leftFinishSeconds) {
-                showWinnerPopup("珠峰北坡队", leftFinishSeconds, rightFinishSeconds);
-            } else {
-                showWinnerPopup("平局", leftFinishSeconds, rightFinishSeconds);
-            }
+            if (leftFinishSeconds < rightFinishSeconds) showWinnerPopup("珠峰南坡队", leftFinishSeconds, rightFinishSeconds);
+            else if (rightFinishSeconds < leftFinishSeconds) showWinnerPopup("珠峰北坡队", leftFinishSeconds, rightFinishSeconds);
+            else showWinnerPopup("平局", leftFinishSeconds, rightFinishSeconds);
         }
     }
 
@@ -411,8 +387,8 @@
             this.timerInterval = null;
             this.timerRunning = false;
             this.finishSeconds = null;
-            // 当前题错误次数（针对当前题目）
-            this.currentQuestionAttempts = 0;
+            // 当前题目错误次数（仅用于累进惩罚）
+            this.currentQuestionWrongCount = 0;
             // 总惩罚秒数
             this.penaltySeconds = 0;
             
@@ -429,7 +405,6 @@
                 this.resetBtn.addEventListener('click', () => this.resetGame());
             }
             
-            // 绑定选项事件：无停顿，可立即重试
             this.optionBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     if (this.completed) {
@@ -446,7 +421,11 @@
             this.updateDisplay();
         }
 
-        // 获取当前显示时间（实际流逝时间 + 惩罚时间）
+        setFeedback(msg, bgColor) {
+            this.feedbackDiv.innerHTML = msg;
+            this.feedbackDiv.style.backgroundColor = bgColor;
+        }
+
         getCurrentDisplayTime() {
             if (!this.timerRunning || !this.startTime) return this.penaltySeconds;
             const elapsed = (Date.now() - this.startTime) / 1000;
@@ -455,8 +434,7 @@
 
         updateTimerDisplay() {
             if (this.timerSpan) {
-                const displayTime = this.getCurrentDisplayTime();
-                this.timerSpan.innerText = displayTime.toFixed(2);
+                this.timerSpan.innerText = this.getCurrentDisplayTime().toFixed(2);
             }
         }
 
@@ -477,26 +455,28 @@
             }
             this.timerRunning = false;
             if (this.startTime) {
-                const finalTime = (Date.now() - this.startTime) / 1000 + this.penaltySeconds;
-                this.finishSeconds = finalTime;
-                this.timerSpan.innerText = finalTime.toFixed(2);
+                this.finishSeconds = (Date.now() - this.startTime) / 1000 + this.penaltySeconds;
+                this.timerSpan.innerText = this.finishSeconds.toFixed(2);
             } else {
                 this.finishSeconds = this.penaltySeconds;
-                this.timerSpan.innerText = this.penaltySeconds.toFixed(2);
+                this.timerSpan.innerText = this.finishSeconds.toFixed(2);
             }
         }
 
-        // 强制跳过当前题目（因错误次数达上限）
-        forceSkipQuestion() {
-            this.penaltySeconds += 5;
+        // 根据当前题目错误次数返回应该增加的惩罚秒数
+        getPenaltyForCurrentWrong() {
+            const count = this.currentQuestionWrongCount + 1; // 即将增加的这一次
+            if (count === 1) return 2;
+            if (count === 2) return 3;
+            return 2; // 第3次及以上每次+2秒
+        }
+
+        applyPenalty() {
+            const add = this.getPenaltyForCurrentWrong();
+            this.penaltySeconds += add;
             this.updateTimerDisplay();
-            this.setFeedback(`⚠️ 本题错误已达3次！强制跳过并 +5 秒惩罚 (总惩罚 +5s)`, "#f5bc70");
-            this.currentQuestionAttempts = 0;
-            this.currentIndex++;
-            this.updateDisplay();
-            if (this.currentIndex === TOTAL_QS) {
-                this.completeGame();
-            }
+            this.currentQuestionWrongCount++;
+            return add;
         }
 
         checkAnswer(selected) {
@@ -506,7 +486,8 @@
             const isCorrect = (selected === currentQ.correct);
             
             if (isCorrect) {
-                this.currentQuestionAttempts = 0;
+                // 答对，重置本题错误计数
+                this.currentQuestionWrongCount = 0;
                 this.setFeedback(`✅ 正确！ 进入下一题`, "#cfe9cd");
                 this.currentIndex++;
                 this.updateDisplay();
@@ -514,15 +495,10 @@
                     this.completeGame();
                 }
             } else {
-                this.currentQuestionAttempts++;
-                const remainingAttempts = 2 - (this.currentQuestionAttempts - 1);
-                if (this.currentQuestionAttempts >= 3) {
-                    this.forceSkipQuestion();
-                    return;
-                } else {
-                    this.setFeedback(`❌ 回答错误！ 本题还剩 ${remainingAttempts} 次尝试机会，再错将强制跳过并+5秒`, "#ffe0cc");
-                }
-                // 答错后不做停顿，按钮立即可用
+                const penalty = this.applyPenalty();
+                const remainingMsg = this.currentQuestionWrongCount === 1 ? "下次再错+3秒" : (this.currentQuestionWrongCount === 2 ? "后续每次+2秒" : "");
+                this.setFeedback(`❌ 回答错误！ +${penalty}秒 ${remainingMsg}，请重新选择`, "#ffe0cc");
+                // 闪烁反馈效果
                 this.feedbackDiv.style.transform = "scale(0.98)";
                 setTimeout(() => { if(this.feedbackDiv) this.feedbackDiv.style.transform = ""; }, 200);
             }
@@ -552,7 +528,7 @@
             this.victoryMsgDiv.style.display = "block";
             this.progressSpan.innerText = `${TOTAL_QS} / ${TOTAL_QS}`;
             this.qCounterSpan.innerText = `完成！ ${TOTAL_QS}/${TOTAL_QS}`;
-            this.setFeedback(`🎉 已完成全部20题！ 最终用时 ${this.finishSeconds.toFixed(2)} 秒 (含惩罚) 🎉`, "#ffda9e");
+            this.setFeedback(`🎉 已完成全部20题！ 最终用时 ${this.finishSeconds.toFixed(2)} 秒 🎉`, "#ffda9e");
             this.optionBtns.forEach(btn => {
                 btn.disabled = true;
                 btn.classList.add("disabled-btn");
@@ -599,7 +575,7 @@
             this.timerRunning = false;
             this.startTime = null;
             this.finishSeconds = null;
-            this.currentQuestionAttempts = 0;
+            this.currentQuestionWrongCount = 0;
             this.penaltySeconds = 0;
             this.timerSpan.innerText = "0.00";
             this.victoryMsgDiv.style.display = "none";
@@ -608,12 +584,7 @@
                 btn.classList.remove("disabled-btn");
             });
             this.updateDisplay();
-            this.setFeedback("🔄 游戏已重置，点击选项开始计时！（每题最多错2次，第3次+5秒）", "#ebdbc4");
-        }
-
-        setFeedback(msg, bgColor) {
-            this.feedbackDiv.innerHTML = msg;
-            this.feedbackDiv.style.backgroundColor = bgColor;
+            this.setFeedback("🔄 游戏已重置，点击选项开始计时！（错误累进罚时）", "#ebdbc4");
         }
     }
 
