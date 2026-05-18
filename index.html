@@ -250,10 +250,10 @@
         </div>
         <div class="score-board">
             <span>✅ 完成进度</span>
-            <span id="leftProgress">0 / 20</span>
+            <span id="leftProgress">0 / 16</span>
         </div>
         <div class="quiz-core">
-            <div class="q-counter" id="leftQCounter">第1 / 20题</div>
+            <div class="q-counter" id="leftQCounter">第1 / 16题</div>
             <div class="question-text" id="leftQuestion"></div>
             <div class="options">
                 <button class="tech-opt rs" data-tech="RS" data-side="left">🛰️ RS</button>
@@ -275,10 +275,10 @@
         </div>
         <div class="score-board">
             <span>✅ 完成进度</span>
-            <span id="rightProgress">0 / 20</span>
+            <span id="rightProgress">0 / 16</span>
         </div>
         <div class="quiz-core">
-            <div class="q-counter" id="rightQCounter">第1 / 20题</div>
+            <div class="q-counter" id="rightQCounter">第1 / 16题</div>
             <div class="question-text" id="rightQuestion"></div>
             <div class="options">
                 <button class="tech-opt rs" data-tech="RS" data-side="right">🛰️ RS</button>
@@ -298,7 +298,7 @@
 </footer>
 
 <script>
-    // 题库20道 (与之前相同)
+    // 题库16道 (精选，保留珠峰核心及典型拓展)
     const QUESTIONS = [
         { text: "【珠峰测高】使用卫星照片找出东绒布冰川表面的冰裂缝，应该用哪种技术？", correct: "RS" },
         { text: "【精准农业】用无人机拍摄麦田照片，看出哪块地的小麦长得不好，需要多施肥。这是哪种技术的应用？", correct: "RS" },
@@ -313,15 +313,11 @@
         { text: "【考古探测】用雷达卫星影像发现地下可能有古墓的痕迹。这是哪种技术的应用？", correct: "RS" },
         { text: "【精准农业】把土壤肥力地图、小麦长势照片和GPS位置结合起来，生成一张“施肥处方图”，告诉无人机哪里多施肥。这主要靠哪种技术？", correct: "GIS" },
         { text: "【自动驾驶】汽车用GPS定位自己在哪里，再结合电子地图决定转弯还是直行。这里最关键的位置获取技术是？", correct: "GNSS" },
-        { text: "【精准农业】农民用手持GPS走到田里不同位置，记录土壤湿度，然后回家在电脑上画出湿度分布图。绘图用的是哪种技术？", correct: "GIS" },
         { text: "【户外救援】被困者用手机发出GPS坐标，救援队据此找到他。这依赖哪种技术？", correct: "GNSS" },
         { text: "【生态保护】把藏羚羊迁徙路线、公路和铁路地图叠在一起，找出哪里容易被车撞。这是哪种技术的分析？", correct: "GIS" },
-        { text: "【冰川监测】对比不同年份的珠峰卫星照片，看出冰川在慢慢后退。用哪种技术？", correct: "RS" },
-        { text: "【登山导航】登山者用手持GPS设备查看当前海拔和位置，防止迷路。这是哪种技术？", correct: "GNSS" },
-        { text: "【灾害救援】把震后破坏分布图、人口密度和道路数据叠加，规划最先去哪个村子救人。这属于哪种技术？", correct: "GIS" },
-        { text: "【精准农业】用遥感卫星照片分析大片农田的作物健康情况，决定灌溉重点区域。用哪种技术？", correct: "RS" }
+        { text: "【冰川监测】对比不同年份的珠峰卫星照片，看出冰川在慢慢后退。用哪种技术？", correct: "RS" }
     ];
-    const TOTAL_QS = 20;
+    const TOTAL_QS = 16;
 
     let gameFinished = false;
     let leftCompleted = false;
@@ -387,9 +383,7 @@
             this.timerInterval = null;
             this.timerRunning = false;
             this.finishSeconds = null;
-            // 当前题目错误次数（仅用于累进惩罚）
             this.currentQuestionWrongCount = 0;
-            // 总惩罚秒数
             this.penaltySeconds = 0;
             
             this.timerSpan = document.getElementById(timerId);
@@ -463,12 +457,11 @@
             }
         }
 
-        // 根据当前题目错误次数返回应该增加的惩罚秒数
         getPenaltyForCurrentWrong() {
-            const count = this.currentQuestionWrongCount + 1; // 即将增加的这一次
+            const count = this.currentQuestionWrongCount + 1;
             if (count === 1) return 2;
             if (count === 2) return 3;
-            return 2; // 第3次及以上每次+2秒
+            return 2;
         }
 
         applyPenalty() {
@@ -486,7 +479,6 @@
             const isCorrect = (selected === currentQ.correct);
             
             if (isCorrect) {
-                // 答对，重置本题错误计数
                 this.currentQuestionWrongCount = 0;
                 this.setFeedback(`✅ 正确！ 进入下一题`, "#cfe9cd");
                 this.currentIndex++;
@@ -498,7 +490,6 @@
                 const penalty = this.applyPenalty();
                 const remainingMsg = this.currentQuestionWrongCount === 1 ? "下次再错+3秒" : (this.currentQuestionWrongCount === 2 ? "后续每次+2秒" : "");
                 this.setFeedback(`❌ 回答错误！ +${penalty}秒 ${remainingMsg}，请重新选择`, "#ffe0cc");
-                // 闪烁反馈效果
                 this.feedbackDiv.style.transform = "scale(0.98)";
                 setTimeout(() => { if(this.feedbackDiv) this.feedbackDiv.style.transform = ""; }, 200);
             }
@@ -528,7 +519,7 @@
             this.victoryMsgDiv.style.display = "block";
             this.progressSpan.innerText = `${TOTAL_QS} / ${TOTAL_QS}`;
             this.qCounterSpan.innerText = `完成！ ${TOTAL_QS}/${TOTAL_QS}`;
-            this.setFeedback(`🎉 已完成全部20题！ 最终用时 ${this.finishSeconds.toFixed(2)} 秒 🎉`, "#ffda9e");
+            this.setFeedback(`🎉 已完成全部${TOTAL_QS}题！ 最终用时 ${this.finishSeconds.toFixed(2)} 秒 🎉`, "#ffda9e");
             this.optionBtns.forEach(btn => {
                 btn.disabled = true;
                 btn.classList.add("disabled-btn");
